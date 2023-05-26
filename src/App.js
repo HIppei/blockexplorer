@@ -19,54 +19,62 @@ const settings = {
 const alchemy = new Alchemy(settings);
 
 function App() {
-  const [blockNumber, setBlockNumber] = useState();
+  const [latestBlockNumber, setLatestBlockNumber] = useState();
   const [block, setBlock] = useState();
   const [transaction, setTransaction] = useState();
 
-  const onCurrentBlockNumClick = async () => {
-    setBlock(await alchemy.core.getBlock(blockNumber));
+  const onBlockSelect = async (blockNumber) => {
+    setBlock(null);
+    setTransaction(null);
+    if (blockNumber) setBlock(await alchemy.core.getBlock(Number(blockNumber)));
   };
 
-  const onTransactionSelect = async (value) => {
-    setTransaction(await alchemy.core.getTransactionReceipt(value));
+  const onTransactionSelect = async (tr) => {
+    setTransaction(null);
+    if (tr) setTransaction(await alchemy.core.getTransactionReceipt(tr));
   };
 
   useEffect(() => {
     async function setBlockNum() {
-      setBlockNumber(await alchemy.core.getBlockNumber());
+      setLatestBlockNumber(await alchemy.core.getBlockNumber());
     }
 
     setBlockNum();
-  });
+  }, []);
 
   return (
     <>
       <div className="current-block-number-container">
-        <div>Current Block Number :</div>
-        <div onClick={onCurrentBlockNumClick} className="link-text">
-          {blockNumber}
-        </div>
+        <div>Recent Block Numbers :</div>
+        {/* <div onClick={onBlockSelect} className="link-text">
+          {latestBlockNumber}
+        </div> */}
+        {latestBlockNumber && (
+          <select onChange={(ev) => onBlockSelect(ev.target.value)}>
+            <option value={''}>Select block</option>
+            <option>{latestBlockNumber}</option>
+            <option>{latestBlockNumber - 1}</option>
+            <option>{latestBlockNumber - 2}</option>
+            <option>{latestBlockNumber - 3}</option>
+            <option>{latestBlockNumber - 4}</option>
+            <option>{latestBlockNumber - 5}</option>
+          </select>
+        )}
       </div>
-      <div>Select block : </div>
-      <div></div>
       <br />
       <div>Block</div>
       {block &&
         Object.keys(block).map((key) => (
-          <div>
+          <div key={key}>
             {key !== 'transactions' ? (
               `${key} : ${block[key]}`
             ) : (
               <>
-                <div key={key}>{key} : </div>
+                <div>{key} : </div>
                 <select onChange={(ev) => onTransactionSelect(ev.target.value)}>
-                  <option key={0} value={0}>
-                    Select here!
-                  </option>
+                  <option value={''}>Select transaction</option>
                   {block[key].map((tr) => (
-                    <option key={tr} value={tr}>
-                      {tr.toString()}
-                    </option>
+                    <option key={tr}>{tr.toString()}</option>
                   ))}
                 </select>
               </>
@@ -78,7 +86,7 @@ function App() {
       <div>
         {transaction &&
           Object.keys(transaction).map((key) => (
-            <div>
+            <div key={key}>
               {key} : {JSON.stringify(transaction[key])}
             </div>
           ))}
